@@ -14,7 +14,7 @@ describe('oauth routes', () => {
     pool.end();
   });
 
-  it.only('should redirect to the github oauth page upon login', async () => {
+  it('should redirect to the github oauth page upon login', async () => {
     const res = await request(app).get('/api/v1/github/login');
 
     expect(res.header.location).toMatch(
@@ -33,10 +33,10 @@ describe('oauth routes', () => {
     ]);
   });
 
-  it('should login and redirect users to /api/v1/github/dashboard', async () => {
+  it.only('should login and redirect users to /api/v1/github/dashboard', async () => {
     const res = await request
       .agent(app)
-      .get('/api/v1/github/login/callback?code=42')
+      .get('/api/v1/github/callback?code=42')
       .redirects(1);
 
     expect(res.body).toEqual({
