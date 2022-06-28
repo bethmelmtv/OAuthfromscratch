@@ -3,7 +3,7 @@ const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
 
-jest.mock('../libs/utils/github');
+jest.mock('../lib/services/github');
 
 describe('oauth routes', () => {
   beforeEach(() => {
@@ -14,11 +14,11 @@ describe('oauth routes', () => {
     pool.end();
   });
 
-  it('should redirect to the github oauth page upon login', async () => {
+  it.only('should redirect to the github oauth page upon login', async () => {
     const res = await request(app).get('/api/v1/github/login');
 
     expect(res.header.location).toMatch(
-      /https:\/\/github.com\/login\/oauth\/authorize\?client_id=[\w\d]+&scope=user&redirect_uri=http:\/\/localhost:7890\/api\/v1\/github\/login\/callback/i
+      /https:\/\/github.com\/login\/oauth\/authorize\?client_id=[\w\d]+&scope=user&redirect_uri=http:\/\/localhost:7890\/api\/v1\/github\/callback/i
     );
   });
 
@@ -46,5 +46,16 @@ describe('oauth routes', () => {
       avatar: expect.any(Number),
       exp: expect.any(Number),
     });
+  });
+
+  it('lists all posts for that signed in user', async () => {
+    const res = await request.agent(app); //this lets us log in
+
+    expect(res.body).toEqual([
+      {
+        id: expect.any(String),
+        text: 'This is a post!',
+      },
+    ]);
   });
 });
