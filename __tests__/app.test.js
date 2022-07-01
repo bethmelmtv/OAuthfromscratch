@@ -3,7 +3,7 @@ const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
 
-jest.mock('../lib/services/github');
+jest.mock('../lib/services/github'); //what is this?
 
 describe('oauth routes', () => {
   beforeEach(() => {
@@ -22,18 +22,7 @@ describe('oauth routes', () => {
     );
   });
 
-  it('creates a new post for that user', async () => {
-    const res = await request.agent(app); //this lets us log in
-
-    expect(res.body).toEqual([
-      {
-        id: expect.any(String),
-        text: 'today is monday!!!',
-      },
-    ]);
-  });
-
-  it.only('should login and redirect users to /api/v1/github/dashboard', async () => {
+  it('should login and redirect users to /api/v1/github/dashboard', async () => {
     const res = await request
       .agent(app)
       .get('/api/v1/github/callback?code=42')
@@ -43,17 +32,30 @@ describe('oauth routes', () => {
       id: expect.any(String),
       username: 'fake_github_user',
       email: 'not-real@example.com',
-      avatar: expect.any(Number),
+      avatar: expect.any(String),
+      iat: expect.any(Number),
       exp: expect.any(Number),
     });
   });
 
-  it('lists all posts for that signed in user', async () => {
-    const res = await request.agent(app); //this lets us log in
+  it('creates a new post for that user', async () => {
+    const agent = request.agent(app);
+    await agent.get('/api/v1/github/callback?code=42').redirects(1);
+    const res = await agent.post('/api/v1/posts').send({
+      text: 'This is a NEW post!',
+    });
+    expect(res.status).toEqual(200);
+    expect(res.body.text).toEqual('This is a NEW post!');
+  });
 
-    expect(res.body).toEqual([
+  it('lists all posts for that signed in user', async () => {
+    const agent = request.agent(app);
+    await agent.get('/api/v1/github/callback?code=42').redirects(1);
+    const resp = await agent.get('/api/v1/posts'); //this lets us log in
+    expect(resp.status).toEqual(200);
+    expect(resp.body).toEqual([
       {
-        id: expect.any(String),
+        id: '1',
         text: 'This is a post!',
       },
     ]);
